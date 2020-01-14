@@ -1,5 +1,6 @@
 const fs = require('fs');
 const express = require('express');
+const colors = require('colors');
 
 const app = express();
 app.use(express.json());
@@ -67,4 +68,11 @@ files.forEach(elt => {
     const path = split.join('/').replace('.json', '');
     addroute(app, method, '/' + path, data);
 });
-app.listen(8000);
+
+let port = 8000;
+if (process.argv.length > 2) {
+    port = process.argv[2];
+}
+app.listen(port, () => {
+    console.log("\n", 'Mock server stating on', `http://localhost:${port}`.blue);
+});
