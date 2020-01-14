@@ -59,7 +59,9 @@ function addroute(app, method, route, data) {
     }
 }
 
+console.info('Read mock files');
 const files = scandir('server', ['.gitkeep']);
+console.info('Creating mock server');
 files.forEach(elt => {
     const data = require('./' + elt);
     const split = elt.split('/');
@@ -74,5 +76,5 @@ if (process.argv.length > 2) {
     port = process.argv[2];
 }
 app.listen(port, () => {
-    console.log("\n", 'Mock server stating on', `http://localhost:${port}`.blue);
+    console.info('Mock server stating on', `http://localhost:${port}`.blue);
 });
