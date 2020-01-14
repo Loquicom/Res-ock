@@ -61,6 +61,9 @@ function addroute(app, method, route, data) {
 
 console.info('Read mock files');
 const files = scandir('server', ['.gitkeep']);
+if (files.length === 0) {
+    console.info('No mock files found'.yellow);
+}
 console.info('Creating mock server');
 files.forEach(elt => {
     const data = require('./' + elt);
