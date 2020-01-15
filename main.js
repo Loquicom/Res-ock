@@ -95,7 +95,8 @@ function applyParam(data, param) {
 
 function answer(req, res, data) {
     const param = extractParam(req);
-    return res.json(JSON.parse(applyParam(data, param)));
+    const json = applyParam(data, param);
+    return res.json(JSON.parse(json));
 }
 
 function addroute(app, method, route, data) {
@@ -138,7 +139,10 @@ files.forEach(elt => {
     const split = elt.split('/');
     split.shift();
     const method = split.shift();
-    const path = split.join('/').replace('.json', '').replace('param-', ':').replace('-optional', '?').replace('.', '/');
+    const path = split.join('/').replace('.json', '').replace(/param-/g, ':').replace(/-optional/g, '?').replace(/\./g, '/');
+    if (program.verbose) {
+        console.info('*'.green, '>'.yellow, `Load URL: /${path}`.bold)
+    }
     addroute(app, method, '/' + path, data);
 });
 
