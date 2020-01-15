@@ -1,6 +1,7 @@
 const fs = require('fs');
 const express = require('express');
-const colors = require('colors');
+const portfinder = require('portfinder');
+require('colors');
 
 const app = express();
 app.use(express.json());
@@ -78,6 +79,15 @@ let port = 8000;
 if (process.argv.length > 2) {
     port = process.argv[2];
 }
-app.listen(port, () => {
-    console.info('Mock server stating on', `http://localhost:${port}`.blue);
+portfinder.getPort({port: port}, (err, freePort) => {
+    if (err) {
+        console.error('Unable to find a free port'.red);
+        process.exit(-1);
+    }
+    if (port != freePort) {
+        console.info(`Port ${port} is unavailable`.yellow);
+    }
+    app.listen(freePort, () => {
+        console.info('Mock server stating on', `http://localhost:${freePort}`.blue);
+    });
 });
