@@ -22,8 +22,8 @@ Il est possible de voir toutes les commandes avec l'argument `-h` ou `--help`.
 
 ## Création d'un point d'entré
 
-Pour créer un point d'entrer il suffit de créer un fichier json qui contient la valeur de retour souhaité dans le dossier correspondant à la méthode désirée pour l'appel (les dossiers se trouvent dans le dossier server). Pour créer un point d'entrée en POST correspondant à l'URL `http://localhost:8000/test`, il suffit de créer un fichier nommé test.json dans le dossier POST. Quand l'URL sera appelée alors le contenu du fichier json sera retourné.
+Pour créer un point d'entré il suffit de créer un fichier json dans la méthode HTTP voulu (ou dans ANY pour n'importe quel méthode).
 
-Il est possible de créer des sous-dossiers pour mock des URL avec plus d'informations. Ainsi créer un fichier list.json dans un sous-dossier user du dossier GET (le chemin est donc `GET/user/list.json`), permet de créer un mock pour l'URL `http://localhost:8000/user/list` en GET. Il est possible de créer autant de sous dossier que nécessaire.
+Pour créer une URL il suffit de faire une arboresence de dossier, ainsi `./user/detail/list/all.json` correspond à l'URL `http://localhost:port/user/detail/list/all`. Il est aussi possible de la faire avec un fichier unique nommé `user.detail.list.all.json`. Il est possible de combiner les deux par exemple `./user/detail/list.all.json`.
 
-Enfin le dossier ANY permet de créer un point d'entrée utilisable avec n'importe quel type de requête HTTP.
+Il est aussi possible d'utiliser des parametre soit dans le corp de la requete via un json, soit via l'url en indiquant dans le nom du fichier où sont les paramètres. Par exemple `user.detail.param-id` correspond à l'URL `http://localhost:port/user/detail/{id}` où id est un parametre. En écrivant `user.detail.param-id-optional` permet d'indiquer q'id est un parametre optionnel. Pour récupèrer les données dans le json il suffit d'utiliser l'annotation `${var}`. Dans le cas de notre exemple on utilise `${id}` pour récupèrer l'id.
