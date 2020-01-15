@@ -65,7 +65,7 @@ function verbose(req, res, next) {
     next();
 }
 
-function extractparam(req) {
+function extractParam(req) {
     const res = {};
     const body = Object.keys(req.body);
     const param = Object.keys(req.params);
@@ -84,33 +84,46 @@ function extractparam(req) {
     return res;
 }
 
+function applyParam(data, param) {
+    let result = data;
+    const key = Object.keys(param);
+    key.forEach(elt => {
+        result = result.replace('${' + elt + '}', param[elt]);
+    });
+    return result;
+}
+
+function answer(req, res, data) {
+    const param = extractParam(req);
+    return res.json(JSON.parse(applyParam(data, param)));
+}
+
 function addroute(app, method, route, data) {
     switch (method) {
         case "GET":
             app.get(route, [verbose, (req, res) => {
-                const param = extractparam(req);
-                return res.json(JSON.parse(data));
+                return answer(req, res, data);
             }]);
             break;
         case "POST":
             app.post(route, [verbose, (req, res) => {
-                return res.json(JSON.parse(data));
-            }]);
+                return answer(req, res, data);
+            }]);;
             break;
         case "PUT":
             app.put(route, [verbose, (req, res) => {
-                return res.json(JSON.parse(data));
+                return answer(req, res, data);
             }]);
             break;
         case "DELETE":
             app.delete(route, [verbose, (req, res) => {
-                return res.json(JSON.parse(data));
+                return answer(req, res, data);
             }]);
             break;
         default:
             app.use(route, [verbose, (req, res) => {
-                return res.json(JSON.parse(data));
-            }]);
+                return answer(req, res, data);
+            }]);;
     }
 }
 
