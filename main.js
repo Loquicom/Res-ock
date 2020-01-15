@@ -1,7 +1,13 @@
 const fs = require('fs');
 const express = require('express');
 const portfinder = require('portfinder');
+const program = require('commander');
 require('colors');
+
+program.version('1.0.0');
+program.option('-p, --port <number>', 'change the port used', 8000);
+program.option('-v, --verbose', 'displays more information', false);
+program.parse(process.argv);
 
 const app = express();
 app.use(express.json());
@@ -31,41 +37,54 @@ function scandir(dirname, exclude = []) {
     return result;
 }
 
+function verbose(req, res, next) {
+    if (program.verbose) {
+        const nbProp = Object.keys(req.body);
+        console.info(`\nCall ${req.method} ${req.route.path} with ${nbProp.length} parameter(s)`);
+        if (nbProp.length > 0) {
+            for (let prop in req.body) {
+                console.info(`   ${prop}: ${req.body[prop]}`);
+            }
+        }
+    }
+    next();
+}
+
 function addroute(app, method, route, data) {
     switch (method) {
         case "GET":
-            app.get(route, (req, res) => {
+            app.get(route, [verbose, (req, res) => {
                 return res.json(data);
-            });
+            }]);
             break;
         case "POST":
-            app.post(route, (req, res) => {
+            app.post(route, [verbose, (req, res) => {
                 return res.json(data);
-            });
+            }]);
             break;
         case "PUT":
-            app.put(route, (req, res) => {
+            app.put(route, [verbose, (req, res) => {
                 return res.json(data);
-            });
+            }]);
             break;
         case "DELETE":
-            app.delete(route, (req, res) => {
+            app.delete(route, [verbose, (req, res) => {
                 return res.json(data);
-            });
+            }]);
             break;
         default:
-            app.use(route, (req, res) => {
+            app.use(route, [verbose, (req, res) => {
                 return res.json(data);
-            });
+            }]);
     }
 }
 
-console.info('Read mock files');
+console.info('*'.bold.green, 'Read mock files'.bold);
 const files = scandir('server', ['.gitkeep']);
 if (files.length === 0) {
-    console.info('No mock files found'.yellow);
+    console.info('*'.bold.green, 'No mock files found'.bold.yellow);
 }
-console.info('Creating mock server');
+console.info('*'.bold.green, 'Creating mock server'.bold);
 files.forEach(elt => {
     const data = require('./' + elt);
     const split = elt.split('/');
@@ -75,19 +94,15 @@ files.forEach(elt => {
     addroute(app, method, '/' + path, data);
 });
 
-let port = 8000;
-if (process.argv.length > 2) {
-    port = process.argv[2];
-}
-portfinder.getPort({port: port}, (err, freePort) => {
+portfinder.getPort({port: program.port}, (err, freePort) => {
     if (err) {
-        console.error('Unable to find a free port'.red);
+        console.error('*'.bold.green, 'Unable to find a free port'.bold.red);
         process.exit(-1);
     }
-    if (port != freePort) {
-        console.info(`Port ${port} is unavailable`.yellow);
+    if (program.port != freePort) {
+        console.info('*'.bold.green, `Port ${program.port} is unavailable`.bold.yellow);
     }
     app.listen(freePort, () => {
-        console.info('Mock server stating on', `http://localhost:${freePort}`.blue);
+        console.info('*'.bold.green, 'Mock server stating on'.bold, `http://localhost:${freePort}`.bold.blue);
     });
 });
