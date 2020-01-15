@@ -39,42 +39,77 @@ function scandir(dirname, exclude = []) {
 
 function verbose(req, res, next) {
     if (program.verbose) {
-        const nbProp = Object.keys(req.body);
-        console.info(`\nCall ${req.method} ${req.route.path} with ${nbProp.length} parameter(s)`);
-        if (nbProp.length > 0) {
+        const body = Object.keys(req.body);
+        const param = Object.keys(req.params);
+        let nbParam = 0;
+        for (let prop in req.params) {
+            if (req.params[prop] !== undefined) {
+                nbParam++;
+            }
+        }
+        const total = body.length + nbParam
+        console.info(`\nCall ${req.method} ${req.route.path} with ${total} parameter(s) (${nbParam} params, ${body.length} body)`);
+        if (nbParam > 0) {
+            for (let prop in req.params) {
+                if (req.params[prop] !== undefined) {
+                    console.info(`   ${prop}: ${req.params[prop]} (Param)`);
+                }
+            }
+        }
+        if (body.length > 0) {
             for (let prop in req.body) {
-                console.info(`   ${prop}: ${req.body[prop]}`);
+                console.info(`   ${prop}: ${req.body[prop]} (Body)`);
             }
         }
     }
     next();
 }
 
+function extractparam(req) {
+    const res = {};
+    const body = Object.keys(req.body);
+    const param = Object.keys(req.params);
+    if (param.length > 0) {
+        for (let prop in req.params) {
+            if (req.params[prop] !== undefined) {
+                res[prop] = req.params[prop];
+            }
+        }
+    }
+    if (body.length > 0) {
+        for (let prop in req.body) {
+            res[prop] = req.body[prop];
+        }
+    }
+    return res;
+}
+
 function addroute(app, method, route, data) {
     switch (method) {
         case "GET":
             app.get(route, [verbose, (req, res) => {
-                return res.json(data);
+                const param = extractparam(req);
+                return res.json(JSON.parse(data));
             }]);
             break;
         case "POST":
             app.post(route, [verbose, (req, res) => {
-                return res.json(data);
+                return res.json(JSON.parse(data));
             }]);
             break;
         case "PUT":
             app.put(route, [verbose, (req, res) => {
-                return res.json(data);
+                return res.json(JSON.parse(data));
             }]);
             break;
         case "DELETE":
             app.delete(route, [verbose, (req, res) => {
-                return res.json(data);
+                return res.json(JSON.parse(data));
             }]);
             break;
         default:
             app.use(route, [verbose, (req, res) => {
-                return res.json(data);
+                return res.json(JSON.parse(data));
             }]);
     }
 }
@@ -86,11 +121,11 @@ if (files.length === 0) {
 }
 console.info('*'.bold.green, 'Creating mock server'.bold);
 files.forEach(elt => {
-    const data = require('./' + elt);
+    const data = fs.readFileSync('./' + elt).toString();
     const split = elt.split('/');
     split.shift();
     const method = split.shift();
-    const path = split.join('/').replace('.json', '');
+    const path = split.join('/').replace('.json', '').replace('param-', ':').replace('-optional', '?').replace('.', '/');
     addroute(app, method, '/' + path, data);
 });
 
