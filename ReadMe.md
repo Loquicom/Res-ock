@@ -2,6 +2,24 @@
 
 Permets la création simple et rapide d'un serveur de mock qui met en place un API REST via le protocole HTTP (par défaut sur le port 8000, il est possible de le changer en le passant en paramètre).
 
+## Utilisation
+
+```bash
+# Lancer l'application sur le port 8000
+npm start
+node main.js
+
+# Changer le port
+node main.js -p 8080
+node main.js --port 8080
+
+# Afficher plus d'informations
+npm run dev
+node main.js -v
+node main.js --verbose
+```
+Il est possible de voir toutes les commandes avec l'argument `-h` ou `--help`.
+
 ## Création d'un point d'entré
 
 Pour créer un point d'entrer il suffit de créer un fichier json qui contient la valeur de retour souhaité dans le dossier correspondant à la méthode désirée pour l'appel (les dossiers se trouvent dans le dossier server). Pour créer un point d'entrée en POST correspondant à l'URL `http://localhost:8000/test`, il suffit de créer un fichier nommé test.json dans le dossier POST. Quand l'URL sera appelée alors le contenu du fichier json sera retourné.
