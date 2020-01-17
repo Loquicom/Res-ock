@@ -88,7 +88,7 @@ function applyParam(data, param) {
     let result = data;
     const key = Object.keys(param);
     key.forEach(elt => {
-        result = result.replace('${' + elt + '}', param[elt]);
+        result = result.replace(new RegExp('\\$\\{' + elt + '\\}', 'g'), param[elt]);
     });
     return result;
 }
