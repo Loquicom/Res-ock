@@ -96,7 +96,12 @@ function applyParam(data, param) {
 function answer(req, res, data) {
     const param = extractParam(req);
     const json = applyParam(data, param);
-    return res.json(JSON.parse(json));
+    try {
+        return res.json(JSON.parse(json));
+    } catch (error) {
+        console.error('Unable to answer'.red);
+        return res.json({error: 'Unable to answer'});
+    }
 }
 
 function addroute(app, method, route, data) {
