@@ -12,6 +12,8 @@ program.parse(process.argv);
 const app = express();
 app.use(express.json());
 
+const wrapperPath = './wrapper.json';
+
 function isdir(path) {
     return fs.statSync(path).isDirectory();
 }
@@ -48,6 +50,9 @@ function verbose(req, res, next) {
             }
         }
         const total = body.length + nbParam
+        if (req.route === undefined) {
+            req.route = {path: '/'};
+        }
         console.info(`\nCall ${req.method} ${req.route.path} with ${total} parameter(s) (${nbParam} params, ${body.length} body)`);
         if (nbParam > 0) {
             for (let prop in req.params) {
@@ -95,8 +100,12 @@ function applyParam(data, param) {
 
 function answer(req, res, data) {
     const param = extractParam(req);
-    const json = applyParam(data, param);
+    let json = applyParam(data, param);
     try {
+        if (fs.existsSync(wrapperPath)) {
+            const wrapper = fs.readFileSync(wrapperPath).toString();
+            json = wrapper.replace('${data}', json);
+        }
         return res.json(JSON.parse(json));
     } catch (error) {
         console.error('Unable to answer'.red);
@@ -144,11 +153,11 @@ files.forEach(elt => {
     const split = elt.split('/');
     split.shift();
     const method = split.shift();
-    const path = split.join('/').replace('.json', '').replace(/param-/g, ':').replace(/-optional/g, '?').replace(/\./g, '/');
+    const path = '/' + split.join('/').replace('.json', '').replace(/param-/g, ':').replace(/-optional/g, '?').replace(/\./g, '/');
     if (program.verbose) {
-        console.info('*'.green, '>'.yellow, `Load URL: /${path}`.bold)
+        console.info('*'.green, '>'.yellow, `Load URL: ${path}`.bold)
     }
-    addroute(app, method, '/' + path, data);
+    addroute(app, method, path, data);
 });
 
 portfinder.getPort({port: program.port}, (err, freePort) => {
