@@ -30,7 +30,7 @@ Il est aussi possible d'utiliser des parametre soit dans le corp de la requete v
 
 ## Encapsulation réponse
 
-Il est possible d'encapsuler toutes les réponses dans un json pré-définit. Pour cela il suffit de créer un fichier `wrapper.json` qui contient le json pour l'encapsulation. Ce json reçoit un parametre nommé data qui contient le json de la requete (il suffit de mettre `${data}` pour recupérer les données). Voici un exemple de json pour l'encapsulation :
+Il est possible d'encapsuler toutes les réponses dans un json pré-définit. Pour cela il suffit de créer un fichier `wrapper.json` à la racine qui contient le json pour l'encapsulation. Ce json reçoit un parametre nommé data qui contient le json de la requete (il suffit de mettre `${data}` pour recupérer les données). Voici un exemple de json pour l'encapsulation :
 
 ```json
 {
@@ -38,3 +38,7 @@ Il est possible d'encapsuler toutes les réponses dans un json pré-définit. Po
     "data": ${data}
 }
 ```
+
+## Erreur 404
+
+Il est possible de définir un json de retour spécifique dans le cas d'une erreur 404. Il suffit simplement de créer un fichier nommé `404.json` à la racine. Ce fichier reçoit un parmetre nommé path (utilisable en écrivant `${path}` dans le fichier) qui correspond à l'URL inconnue appelée.
