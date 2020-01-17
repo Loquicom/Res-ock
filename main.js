@@ -50,10 +50,7 @@ function verbose(req, res, next) {
             }
         }
         const total = body.length + nbParam
-        if (req.route === undefined) {
-            req.route = {path: '/'};
-        }
-        console.info(`\nCall ${req.method} ${req.route.path} with ${total} parameter(s) (${nbParam} params, ${body.length} body)`);
+        console.info(`\nCall ${req.method} ${req.originalUrl} with ${total} parameter(s) (${nbParam} params, ${body.length} body)`);
         if (nbParam > 0) {
             for (let prop in req.params) {
                 if (req.params[prop] !== undefined) {
@@ -142,11 +139,13 @@ function addroute(app, method, route, data) {
     }
 }
 
+// Recherche des fichiers
 console.info('*'.bold.green, 'Read mock files'.bold);
 const files = scandir('server', ['.gitkeep']);
 if (files.length === 0) {
     console.info('*'.bold.green, 'No mock files found'.bold.yellow);
 }
+// Ajout des routes pour chaque fichier
 console.info('*'.bold.green, 'Creating mock server'.bold);
 files.forEach(elt => {
     const data = fs.readFileSync('./' + elt).toString();
@@ -159,7 +158,11 @@ files.forEach(elt => {
     }
     addroute(app, method, path, data);
 });
-
+// Gestion 404
+app.use([verbose, (request, response) => {
+    response.status(404).json({code: 404, error: `${request.method} ${request.originalUrl} not found`});
+}])
+// Lancement du serveur
 portfinder.getPort({port: program.port}, (err, freePort) => {
     if (err) {
         console.error('*'.bold.green, 'Unable to find a free port'.bold.red);
