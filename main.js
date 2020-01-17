@@ -13,6 +13,7 @@ const app = express();
 app.use(express.json());
 
 const wrapperPath = './wrapper.json';
+const error404path = './404.json';
 
 function isdir(path) {
     return fs.statSync(path).isDirectory();
@@ -101,7 +102,7 @@ function answer(req, res, data) {
     try {
         if (fs.existsSync(wrapperPath)) {
             const wrapper = fs.readFileSync(wrapperPath).toString();
-            json = wrapper.replace('${data}', json);
+            json = wrapper.replace(new RegExp('\\$\\{data\\}', 'g'), json);
         }
         return res.json(JSON.parse(json));
     } catch (error) {
@@ -160,7 +161,12 @@ files.forEach(elt => {
 });
 // Gestion 404
 app.use([verbose, (request, response) => {
-    response.status(404).json({code: 404, error: `${request.method} ${request.originalUrl} not found`});
+    if (fs.existsSync(error404path)) {
+        const data = fs.readFileSync(error404path).toString();
+        response.status(404).json(JSON.parse(data.replace(new RegExp('\\$\\{path\\}', 'g'), request.originalUrl)));
+    } else {
+        response.status(404).json({code: 404, error: `${request.method} ${request.originalUrl} not found`});
+    }
 }])
 // Lancement du serveur
 portfinder.getPort({port: program.port}, (err, freePort) => {
