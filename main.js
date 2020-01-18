@@ -51,17 +51,17 @@ function verbose(req, res, next) {
             }
         }
         const total = body.length + nbParam
-        console.info(`\nCall ${req.method} ${req.originalUrl} with ${total} parameter(s) (${nbParam} params, ${body.length} body)`);
+        console.info('*'.green, '>'.cyan, `Call ${req.method} ${req.originalUrl} with ${total} parameter(s) (${nbParam} params, ${body.length} body)`.bold);
         if (nbParam > 0) {
             for (let prop in req.params) {
                 if (req.params[prop] !== undefined) {
-                    console.info(`   ${prop}: ${req.params[prop]} (Param)`);
+                    console.info('\t-'.cyan, `${prop}: ${req.params[prop]} (Param)`);
                 }
             }
         }
         if (body.length > 0) {
             for (let prop in req.body) {
-                console.info(`   ${prop}: ${req.body[prop]} (Body)`);
+                console.info('\t-'.cyan, `${prop}: ${req.body[prop]} (Body)`);
             }
         }
     }
@@ -96,12 +96,11 @@ function applyParam(data, param) {
     return result;
 }
 
-function answer(req, res, data) {
+function answer(req, res, data, wrapper = null) {
     const param = extractParam(req);
     let json = applyParam(data, param);
     try {
-        if (fs.existsSync(wrapperPath)) {
-            const wrapper = fs.readFileSync(wrapperPath).toString();
+        if (wrapper !== null) {
             json = wrapper.replace(new RegExp('\\$\\{data\\}', 'g'), json);
         }
         return res.json(JSON.parse(json));
@@ -111,31 +110,31 @@ function answer(req, res, data) {
     }
 }
 
-function addroute(app, method, route, data) {
+function addroute(app, method, route, data, wrapper = null) {
     switch (method) {
         case "GET":
             app.get(route, [verbose, (req, res) => {
-                return answer(req, res, data);
+                return answer(req, res, data, wrapper);
             }]);
             break;
         case "POST":
             app.post(route, [verbose, (req, res) => {
-                return answer(req, res, data);
+                return answer(req, res, data, wrapper);
             }]);;
             break;
         case "PUT":
             app.put(route, [verbose, (req, res) => {
-                return answer(req, res, data);
+                return answer(req, res, data, wrapper);
             }]);
             break;
         case "DELETE":
             app.delete(route, [verbose, (req, res) => {
-                return answer(req, res, data);
+                return answer(req, res, data, wrapper);
             }]);
             break;
         default:
             app.use(route, [verbose, (req, res) => {
-                return answer(req, res, data);
+                return answer(req, res, data, wrapper);
             }]);;
     }
 }
@@ -146,8 +145,17 @@ const files = scandir('server', ['.gitkeep']);
 if (files.length === 0) {
     console.info('*'.bold.green, 'No mock files found'.bold.yellow);
 }
-// Ajout des routes pour chaque fichier
+// Création du serveur
 console.info('*'.bold.green, 'Creating mock server'.bold);
+// Chargement encapsulation
+let wrapper = null;
+if (fs.existsSync(wrapperPath)) {
+    if (program.verbose) {
+        console.info('*'.green, '>'.yellow, 'Load wrapper'.bold);
+    }
+    wrapper = fs.readFileSync(wrapperPath).toString();
+}
+// Ajout des routes pour chaque fichier
 files.forEach(elt => {
     const data = fs.readFileSync('./' + elt).toString();
     const split = elt.split('/');
@@ -157,17 +165,23 @@ files.forEach(elt => {
     if (program.verbose) {
         console.info('*'.green, '>'.yellow, `Load URL: ${path}`.bold)
     }
-    addroute(app, method, path, data);
+    addroute(app, method, path, data, wrapper);
 });
 // Gestion 404
+let error404 = null;
+if (fs.existsSync(error404path)) {
+    if (program.verbose) {
+        console.info('*'.green, '>'.yellow, 'Load error 404'.bold);
+    }
+    error404 = fs.readFileSync(error404path).toString();
+}
 app.use([verbose, (request, response) => {
-    if (fs.existsSync(error404path)) {
-        const data = fs.readFileSync(error404path).toString();
-        response.status(404).json(JSON.parse(data.replace(new RegExp('\\$\\{path\\}', 'g'), request.originalUrl)));
+    if (error404 !== null) {     
+        response.status(404).json(JSON.parse(error404.replace(new RegExp('\\$\\{path\\}', 'g'), request.originalUrl)));
     } else {
         response.status(404).json({code: 404, error: `${request.method} ${request.originalUrl} not found`});
     }
-}])
+}]);
 // Lancement du serveur
 portfinder.getPort({port: program.port}, (err, freePort) => {
     if (err) {
