@@ -28,6 +28,8 @@ Pour créer une URL il suffit de faire une arboresence de dossier, ainsi `./user
 
 Il est aussi possible d'utiliser des parametre soit dans le corp de la requete via un json, soit via l'url en indiquant dans le nom du fichier où sont les paramètres. Par exemple `user.detail.param-id` correspond à l'URL `http://localhost:port/user/detail/{id}` où id est un parametre. En écrivant `user.detail.param-id-optional` permet d'indiquer q'id est un parametre optionnel. Pour récupèrer les données dans le json il suffit d'utiliser l'annotation `${var}`. Dans le cas de notre exemple on utilise `${id}` pour récupèrer l'id.
 
+Il est possible de modifier les points d'entrée sans redémarrer le serveur.
+
 ## Encapsulation réponse
 
 Il est possible d'encapsuler toutes les réponses dans un json pré-définit. Pour cela il suffit de créer un fichier `wrapper.json` à la racine qui contient le json pour l'encapsulation. Ce json reçoit un parametre nommé data qui contient le json de la requete (il suffit de mettre `${data}` pour recupérer les données). Voici un exemple de json pour l'encapsulation :
@@ -38,7 +40,3 @@ Il est possible d'encapsuler toutes les réponses dans un json pré-définit. Po
     "data": ${data}
 }
 ```
-
-## Erreur 404
-
-Il est possible de définir un json de retour spécifique dans le cas d'une erreur 404. Il suffit simplement de créer un fichier nommé `404.json` à la racine. Ce fichier reçoit un parmetre nommé path (utilisable en écrivant `${path}` dans le fichier) qui correspond à l'URL inconnue appelée.
