@@ -100,8 +100,14 @@ function answer(req, res, data, wrapper = null) {
     const param = extractParam(req);
     let json = applyParam(data, param);
     try {
-        if (wrapper !== null) {
-            json = wrapper.replace(new RegExp('\\$\\{data\\}', 'g'), json);
+        if (json.trim() === '') {
+            if (wrapper !== null) {
+                json = wrapper.replace(new RegExp('\\$\\{data\\}', 'g'), 'null');
+            } else {
+                json = '{}';
+            }
+        } else if (wrapper !== null) {
+            json = wrapper.replace(new RegExp('\\$\\{data\\}', 'g'), json);  
         }
         return res.json(JSON.parse(json));
     } catch (error) {
