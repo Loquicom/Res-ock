@@ -169,7 +169,7 @@ files.forEach(elt => {
     const method = split.shift();
     const path = '/' + split.join('/').replace('.json', '').replace(/param-/g, ':').replace(/-optional/g, '?').replace(/\./g, '/');
     if (program.verbose) {
-        console.info('*'.green, '>'.yellow, `Load URL: ${path}`.bold)
+        console.info('*'.green, '>'.yellow, `Load URL: ${method} ${path}`.bold)
     }
     addroute(app, method, path, data, wrapper);
 });
