@@ -14,9 +14,11 @@
   "author": "Arthur Brandao",
   "license": "MIT",
   "dependencies": {
+    "chokidar": "^3.3.1",
     "colors": "^1.4.0",
     "commander": "^4.1.0",
     "express": "^4.17.1",
-    "portfinder": "^1.0.25"
+    "portfinder": "^1.0.25",
+    "remove-route-runtime": "^1.0.1"
   }
 }

@@ -1,5 +1,7 @@
 const fs = require('fs');
+const chokidar = require('chokidar');
 const express = require('express');
+const removeRoute = require('remove-route-runtime');
 const portfinder = require('portfinder');
 const program = require('commander');
 require('colors');
@@ -13,7 +15,6 @@ const app = express();
 app.use(express.json());
 
 const wrapperPath = './wrapper.json';
-const error404path = './404.json';
 
 function isdir(path) {
     return fs.statSync(path).isDirectory();
@@ -38,6 +39,18 @@ function scandir(dirname, exclude = []) {
         }
     });
     return result;
+}
+
+function parseFilename(filename) {
+    let data = null;
+    if (fs.existsSync('./' + filename)) {
+        data = fs.readFileSync('./' + filename).toString();
+    }
+    const split = filename.split('/');
+    split.shift();
+    const method = split.shift();
+    const path = '/' + split.join('/').replace('.json', '').replace(/param-/g, ':').replace(/-optional/g, '?').replace(/\./g, '/');
+    return {data: data, method: method, path: path};
 }
 
 function verbose(req, res, next) {
@@ -116,7 +129,7 @@ function answer(req, res, data, wrapper = null) {
     }
 }
 
-function addroute(app, method, route, data, wrapper = null) {
+function addRoute(app, method, route, data, wrapper = null) {
     switch (method) {
         case "GET":
             app.get(route, [verbose, (req, res) => {
@@ -139,7 +152,7 @@ function addroute(app, method, route, data, wrapper = null) {
             }]);
             break;
         default:
-            app.use(route, [verbose, (req, res) => {
+            app.all(route, [verbose, (req, res) => {
                 return answer(req, res, data, wrapper);
             }]);;
     }
@@ -163,31 +176,61 @@ if (fs.existsSync(wrapperPath)) {
 }
 // Ajout des routes pour chaque fichier
 files.forEach(elt => {
-    const data = fs.readFileSync('./' + elt).toString();
-    const split = elt.split('/');
-    split.shift();
-    const method = split.shift();
-    const path = '/' + split.join('/').replace('.json', '').replace(/param-/g, ':').replace(/-optional/g, '?').replace(/\./g, '/');
+    const parse = parseFilename(elt);
     if (program.verbose) {
-        console.info('*'.green, '>'.yellow, `Load URL: ${method} ${path}`.bold)
+        console.info('*'.green, '>'.yellow, `Load URL: ${parse.method} ${parse.path}`.bold)
     }
-    addroute(app, method, path, data, wrapper);
+    addRoute(app, parse.method, parse.path, parse.data, wrapper);
 });
-// Gestion 404
-let error404 = null;
-if (fs.existsSync(error404path)) {
+// Ajout watcher
+console.info('*'.green, 'Watching changes...'.bold);
+const watcher = chokidar.watch(['./server'], {
+    ignored: /(^|[\/\\])\../, 
+    persistent: true
+});
+watcher.on('add', path => {
+    // Remplace les \ du chemin Windows par des /
+    path = path.replace(/\\/g, '/');
+    // Skip la 1er detection
+    const index = files.indexOf(path);
+    if (index !== -1) {
+        files.splice(index, 1);
+        return;
+    }
+    // Ajoute les nouveaux chemins
+    const parse = parseFilename(path);
     if (program.verbose) {
-        console.info('*'.green, '>'.yellow, 'Load error 404'.bold);
+        console.info('*'.green, '>'.yellow, `Load URL: ${parse.method} ${parse.path}`.bold)
     }
-    error404 = fs.readFileSync(error404path).toString();
-}
-app.use([verbose, (request, response) => {
-    if (error404 !== null) {     
-        response.status(404).json(JSON.parse(error404.replace(new RegExp('\\$\\{path\\}', 'g'), request.originalUrl)));
+    addRoute(app, parse.method, parse.path, parse.data, wrapper);
+});
+watcher.on('change', path => {
+    const method = ['GET', 'POST', 'PUT', 'DELETE'];
+    const parse = parseFilename(path.replace(/\\/g, '/'));
+    // Supprime l'ancienne route avec les anciennes données
+    if (method.indexOf(parse.method) === -1) {
+        removeRoute(app, parse.path);
     } else {
-        response.status(404).json({code: 404, error: `${request.method} ${request.originalUrl} not found`});
+        removeRoute(app, parse.path, parse.method.toLowerCase());
     }
-}]);
+    // Remet la route avec les nouvelles données
+    if (program.verbose) {
+        console.info('*'.green, '>'.yellow, `Reload URL: ${parse.method} ${parse.path}`.bold)
+    }
+    addRoute(app, parse.method, parse.path, parse.data, wrapper);
+});
+watcher.on('unlink', path => {
+    const method = ['GET', 'POST', 'PUT', 'DELETE'];
+    const parse = parseFilename(path.replace(/\\/g, '/'));
+    if (program.verbose) {
+        console.info('*'.green, '>'.yellow, `Unload URL: ${parse.method} ${parse.path}`.bold)
+    }
+    if (method.indexOf(parse.method) === -1) {
+        removeRoute(app, parse.path);
+    } else {
+        removeRoute(app, parse.path, parse.method.toLowerCase());
+    }   
+});
 // Lancement du serveur
 portfinder.getPort({port: program.port}, (err, freePort) => {
     if (err) {
