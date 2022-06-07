@@ -1,4 +1,4 @@
-# Mock Server
+# Res™ock (Res-ock)
 
 Permets la création simple et rapide d'un serveur de mock qui met en place un API REST via le protocole HTTP (par défaut sur le port 8000, il est possible de le changer en le passant en paramètre).
 
