@@ -1,7 +1,7 @@
 {
-  "name": "mock-server",
+  "name": "Res™ock",
   "version": "1.0.0",
-  "description": "A simple mock server",
+  "description": "A simple mock rest server",
   "main": "main.js",
   "scripts": {
     "start": "node main.js",
@@ -9,9 +9,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://gitlab.univ-artois.fr/arthur_brandao/mock-server.git"
+    "url": "https://github.com/Loquicom/Res-ock"
   },
-  "author": "Arthur Brandao",
+  "author": "Loquicom",
   "license": "MIT",
   "dependencies": {
     "chokidar": "^3.3.1",
