@@ -1,5 +1,5 @@
 {
-  "name": "Res-ock",
+  "name": "resock",
   "version": "1.0.0",
   "description": "A simple mock rest server",
   "main": "main.js",
